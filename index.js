@@ -1,3 +1,5 @@
+const port = process.env.PORT || 5000;
+
 const server = require("http").createServer((req, res) => {
   res.end("Hello world");
 });
@@ -12,6 +14,6 @@ io.on("connection", (client) => {
   console.log("Connected");
 });
 
-server.listen(5000, () => {
+server.listen(port, () => {
   console.log("running on 5000");
 });
