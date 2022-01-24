@@ -12,6 +12,10 @@ const users = {};
 
 io.on("connection", (client) => {
   console.log("Connected");
+
+  client.on("hello", (message) => {
+    io.emit("gotit", message);
+  });
 });
 
 server.listen(port, () => {
