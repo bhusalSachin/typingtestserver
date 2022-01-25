@@ -13,12 +13,14 @@ const server = require("http").createServer();
 app.use(express.json());
 app.use(roomRouter);
 
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-});
+// const io = require("socket.io")(server, {
+//   cors: {
+//     origin: "http://localhost:3000",
+//     methods: ["GET", "POST"],
+//   },
+// });
+
+const io = require("socket.io")(server);
 
 app.get("/", (req, res) => {
   res.send("hello world");
