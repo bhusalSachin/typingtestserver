@@ -2,18 +2,36 @@ const Room = require("../models/room");
 
 exports.checkForId = async (req, res) => {
   console.log("got post request");
-  const { roomId } = req.body;
-  if (!roomId) res.json({ success: false, message: "No room id typed1" });
+  const { roomId, username } = req.body;
+
+  console.log(req.body);
+  if (!roomId) {
+    return res.json({ success: false, message: "No room id typed" });
+  }
 
   try {
     const room = await Room.findOne({ roomId });
 
-    if (room) res.json({ success: true, message: "Found the room" });
-    else res.json({ success: false, message: "Didn't find the room" });
+    if (room) {
+      const isMatched = room.players.find((elem) => elem.username === username);
+      console.log(isMatched);
+      if (isMatched)
+        return res.json({
+          success: false,
+          message: "Username is already taken by someone else in the room",
+        });
+      else {
+        room.players.push({ username, wpm: "", accuracy: "" });
+        await room.save();
+      }
+      return res.status(200).json({ success: true, message: "Found the room" });
+    } else {
+      return res.json({ success: false, message: "Didn't find the room" });
+    }
   } catch (err) {
-    res.json({
-      success: true,
-      message: "Error in finding room. Try entering id again",
+    return res.json({
+      success: false,
+      message: err.message,
     });
   }
 };

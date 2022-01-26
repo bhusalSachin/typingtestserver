@@ -2,15 +2,9 @@ const mongoose = require("mongoose");
 
 const PlayerSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      required: true,
-    },
-    ishost: {
-      type: Boolean,
-      default: false,
-      required: true,
-    },
+    username: String,
+    wpm: String,
+    accuracy: String,
   },
   { timestamps: true }
 );
