@@ -13,7 +13,8 @@ exports.checkForId = async (req, res) => {
     const room = await Room.findOne({ roomId });
 
     if (room) {
-      const isMatched = room.players.find((elem) => elem.username === username);
+      const allplayers = room.players;
+      const isMatched = allplayers.find((elem) => elem.username === username);
       console.log(isMatched);
       if (isMatched)
         return res.json({
@@ -21,7 +22,8 @@ exports.checkForId = async (req, res) => {
           message: "Username is already taken by someone else in the room",
         });
       else {
-        room.players.push({ username, wpm: "", accuracy: "" });
+        // room.players.push({ username, wpm: "", accuracy: "" });
+        room.players.push({ username });
         await room.save();
       }
       return res.status(200).json({ success: true, message: "Found the room" });

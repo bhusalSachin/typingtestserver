@@ -1,10 +1,19 @@
 const mongoose = require("mongoose");
 
+const StatSchema = new mongoose.Schema(
+  {
+    wpm: String,
+    accuracy: String,
+  },
+  { timestamps: true }
+);
+
 const PlayerSchema = new mongoose.Schema(
   {
     username: String,
-    wpm: String,
-    accuracy: String,
+    netWpm: Number,
+    netAccuracy: Number,
+    stats: [StatSchema],
   },
   { timestamps: true }
 );

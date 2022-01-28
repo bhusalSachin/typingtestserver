@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 io.on("connection", (socket) => {
   console.log("Connected");
 
-  const id = socket.handshake.query.id;
+  const { user, id } = socket.handshake.query;
   socket.join(id);
 
   socket.on("roomCreated", async (roomId) => {
@@ -52,27 +52,72 @@ io.on("connection", (socket) => {
     io.emit("newplayer", username);
 
     const room = await Room.findOne({ roomId });
-
     io.emit("allplayers", room.players);
   });
 
   socket.on("testcomplete", async (data) => {
     const { roomId, username, wpm, accuracy } = data;
-
     const room = await Room.findOne({ roomId });
     const player = room.players.find((elem) => elem.username === username);
+    player.stats.push({ wpm, accuracy });
+    await room.save();
+    const allstats = player.stats;
+    const length = player.stats.length;
+    const netWpm =
+      player.stats.reduce((acc, obj) => acc + parseInt(obj.wpm), 0) / length;
+    const netAccuracy =
+      player.stats.reduce((prev, curr) => prev + parseInt(curr.accuracy), 0) /
+      length;
     room.players.splice(room.players.indexOf(player), 1, {
       username,
-      wpm,
-      accuracy,
+      netWpm,
+      netAccuracy,
+      stats: allstats,
     });
     await room.save();
-    io.emit("testcomplete", { username, wpm, accuracy });
+    io.emit("testcomplete", { username, netWpm, netAccuracy });
+
+    room.players.sort((a, b) => {
+      if (a.netWpm < b.netWpm) return 1;
+      if (a.netWpm > b.netWpm) return -1;
+      return 0;
+    });
+    await room.save();
+    io.emit(
+      "updatedleader",
+      room.players,
+      room.players.find((elem) => elem.username === user)
+    );
   });
 
-  socket.on("onstart", () => {
+  socket.on("onstart", (text) => {
     console.log("onstarted clicked");
-    io.emit("started");
+    io.emit("started", text);
+  });
+
+  socket.on("disbound", () => {
+    socket.leave(id);
+  });
+
+  socket.on("alertiscoming", (msg) => {
+    io.emit("alertmsg", msg);
+  });
+
+  socket.on("disconnect", async () => {
+    console.log(user, " disconnected");
+    if (user === "host") {
+      io.emit("hostleft");
+      await Room.findOneAndDelete({ roomId: id });
+    }
+    const room = await Room.findOne({ roomId: id });
+    if (room) {
+      const player = room.players.find((elem) => elem.username === user);
+      room.players.id(player.id).remove();
+      await room.save();
+      // const host = room.players.find((elem) => elem.username === "host");
+      // room.players.splice(room.players.indexOf(host), 1);
+      io.emit("playergone", user, room.players);
+    }
   });
 });
 
